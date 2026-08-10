@@ -2,11 +2,11 @@ name: Veille inscriptions MIUT
 
 on:
   schedule:
-    - cron: "0 6,12,18 * * *"   # 3 passages par jour (UTC)
-  workflow_dispatch:            # déclenchement manuel
+    - cron: "0 6,12,18 * * *"
+  workflow_dispatch:
 
 permissions:
-  contents: write               # nécessaire pour recommiter state.json
+  contents: write
 
 jobs:
   watch:
@@ -27,9 +27,19 @@ jobs:
         run: python monitor.py
 
       - name: Persist state
+        continue-on-error: true
         run: |
           git config user.name "miut-bot"
-          git config user.email "bot@users.noreply.github.com"
+          git config user.email "miut-bot@users.noreply.github.com"
+          if [ ! -f state.json ]; then
+            echo "state.json absent - rien a committer"
+            exit 0
+          fi
           git add state.json
-          git diff --staged --quiet || git commit -m "state $(date -u +%F_%H:%M)"
-          git push
+          if git diff --staged --quiet; then
+            echo "state.json inchange"
+            exit 0
+          fi
+          git commit -m "state $(date -u +%F_%H:%M)"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
