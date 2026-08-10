@@ -1,0 +1,39 @@
+{
+  "feed_items": [
+    "1e61492a14513ac8",
+    "2d6d7add2b6cbbcb",
+    "4066a61640242178",
+    "4c5c6d2b5855641b",
+    "4d0e04338efcdf72",
+    "6821b3d9eca1b724",
+    "727c3ffc362ba16e",
+    "8f969ebf7a5a1e0f",
+    "9160ef8a368da821",
+    "bbb646ffa07c8f31",
+    "ca066e23c3aa8f10",
+    "f57ffa8bf357c991"
+  ],
+  "heartbeat": "2026-08-10T15:53:53.272554+00:00",
+  "pages": {
+    "https://miutmadeira.com/inscricoes/": {
+      "hash": "9ad3fd5f47dc01898779746c2650d49102b763a1ea3621a93298c52ab73d3dc3",
+      "len": 2394,
+      "opening": false
+    },
+    "https://miutmadeira.com/pt/inscricoes/": {
+      "hash": "a5f222f4c8c32768bb3f846cead30f6c8ba5988374e88f396d54b0e7bf62b932",
+      "len": 2387,
+      "opening": false
+    },
+    "https://miutmadeira.com/registrations/": {
+      "hash": "80b360a64cd20c5844fa2bc380a6727a7b7a19cc15ab993d58305b298606fc67",
+      "len": 2274,
+      "opening": false
+    },
+    "https://miutmadeira.com/regulations/": {
+      "hash": "9be0a27325982ab031cfd9ef5a0ce14a655325765ea3f6cf4f6d7df8167d7a51",
+      "len": 65378,
+      "opening": false
+    }
+  }
+}
