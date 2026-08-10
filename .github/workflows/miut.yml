@@ -1,0 +1,35 @@
+name: Veille inscriptions MIUT
+
+on:
+  schedule:
+    - cron: "0 6,12,18 * * *"   # 3 passages par jour (UTC)
+  workflow_dispatch:            # déclenchement manuel
+
+permissions:
+  contents: write               # nécessaire pour recommiter state.json
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - name: Run monitor
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py
+
+      - name: Persist state
+        run: |
+          git config user.name "miut-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add state.json
+          git diff --staged --quiet || git commit -m "state $(date -u +%F_%H:%M)"
+          git push
