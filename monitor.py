@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Veille ouverture inscriptions MIUT 2027 — version 2.
+Veille ouverture inscriptions MIUT 2027 — version 3 (ciblage strict).
 
-Corrections v2 :
-  - diagnostic Telegram explicite (secrets manquants, réponse de l'API)
-  - suppression du capteur "URL 404 -> 200" (faux positifs : /registrations/,
-    /inscricoes/ et /pt/inscricoes/ sont des pages permanentes)
-  - surveillance par empreinte de contenu des pages règlement + inscriptions,
-    qui portent le calendrier daté d'ouverture
-  - détection ciblée d'une date d'ouverture mentionnant 2026/2027
-  - alerte sur tout nouvel article du blog (volume faible : ~1-2 par mois)
-  - premier run = baseline silencieuse, pas de déluge d'alertes
+Ne declenche QUE sur :
+  1. apparition d'un motif "ouverture des inscriptions + 2026/2027"
+     sur les pages reglement / inscriptions
+  2. modification du contenu de la page REGLEMENT (elle ne bouge qu'une a
+     deux fois par an ; son edition precede l'ouverture)
+  3. article de blog associant inscription et millesime 2027
+
+Tout le reste (page d'accueil, pages permanentes inchangees, articles
+sans rapport) est journalise mais n'envoie rien.
+Heartbeat hebdomadaire = temoin de bon fonctionnement.
 """
 
 import hashlib
@@ -26,17 +27,20 @@ STATE_FILE = os.environ.get("MIUT_STATE", "state.json")
 TG_TOKEN = os.environ.get("TELEGRAM_TOKEN", "").strip()
 TG_CHAT = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
-# Pages porteuses du calendrier d'ouverture : le règlement annonce les dates
-# et heures d'ouverture distance par distance, plusieurs semaines à l'avance.
-WATCH_PAGES = [
+# Pages dont toute modification est un signal fort (rarement editees).
+REGULATION_PAGES = [
     "https://miutmadeira.com/regulations/",
     "https://miutmadeira.com/fr/reglements/",
+    "https://miutmadeira.com/fr/reglement/",
     "https://miutmadeira.com/pt/regulamentos/",
+]
+
+# Pages surveillees uniquement pour le motif "date d'ouverture".
+REGISTRATION_PAGES = [
     "https://miutmadeira.com/registrations/",
-    "https://miutmadeira.com/fr/inscriptions-2/",
+    "https://miutmadeira.com/inscricoes/",
     "https://miutmadeira.com/pt/inscricoes/",
-    "https://miutmadeira.com/fr/home-fr/",
-    "https://miutmadeira.com/",
+    "https://miutmadeira.com/fr/inscriptions/",
 ]
 
 FEEDS = [
@@ -44,14 +48,20 @@ FEEDS = [
     "https://miutmadeira.com/fr/category/fr/feed/",
 ]
 
-# Une date d'ouverture du type "October 30, 2026 - 15:00 - Opening of
-# registrations" ou "30 octobre 2026 - 15h00 - ouverture des inscriptions".
+YEAR = r"20(?:26|27)"
+OPEN_WORD = r"ouvertur|opening|abertura|ouvrent|open\b|abrem"
+REG_WORD = r"inscription|registration|inscri[çc][õo]|inscri[çc][ãa]o"
+
+# "October 30, 2026 - 15:00 - Opening of registrations for MIUT MARATHON"
+# "30 octobre 2026 - 15h00 - ouverture des inscriptions"
 OPENING_RE = re.compile(
-    r"(?is)(20(?:26|27))[^.]{0,120}?(ouverture|opening|abertura)"
-    r"[^.]{0,60}?(inscription|registration|inscri[çc])"
-    r"|(ouverture|opening|abertura)[^.]{0,60}?"
-    r"(inscription|registration|inscri[çc])[^.]{0,120}?(20(?:26|27))"
+    rf"(?is)(?:{YEAR}[^.\n]{{0,150}}?(?:{OPEN_WORD})[^.\n]{{0,80}}?(?:{REG_WORD})"
+    rf"|(?:{OPEN_WORD})[^.\n]{{0,80}}?(?:{REG_WORD})[^.\n]{{0,150}}?{YEAR})"
 )
+
+# Article de blog : inscription + 2027 explicitement.
+FEED_RE = re.compile(rf"(?is)(?:{REG_WORD})[^.\n]{{0,200}}?2027"
+                     rf"|2027[^.\n]{{0,200}}?(?:{REG_WORD})")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -74,33 +84,18 @@ def save_state(state: dict) -> None:
 
 
 def notify(text: str) -> None:
-    """Envoi Telegram avec diagnostic complet dans les logs."""
-    print("=== MESSAGE ===")
-    print(text)
-    print("===============")
-
-    if not TG_TOKEN:
-        print("DIAG: TELEGRAM_TOKEN absent ou vide cote runner.", file=sys.stderr)
-    if not TG_CHAT:
-        print("DIAG: TELEGRAM_CHAT_ID absent ou vide cote runner.", file=sys.stderr)
+    print("=== MESSAGE ===\n" + text + "\n===============")
     if not (TG_TOKEN and TG_CHAT):
-        print("DIAG: envoi abandonne. Verifier Settings > Secrets and "
-              "variables > Actions, et le bloc env: du workflow.", file=sys.stderr)
+        print("DIAG: secrets Telegram manquants, envoi abandonne.", file=sys.stderr)
         return
-
-    print(f"DIAG: token len={len(TG_TOKEN)}, chat_id={TG_CHAT!r}")
     try:
-        resp = requests.post(
+        r = requests.post(
             f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
-            json={"chat_id": TG_CHAT, "text": text,
+            json={"chat_id": TG_CHAT, "text": text[:3900],
                   "disable_web_page_preview": False},
             timeout=20,
         )
-        print(f"DIAG: HTTP {resp.status_code} — {resp.text[:300]}")
-        if resp.status_code != 200:
-            print("DIAG: echec. 401/404 = token faux ; "
-                  "'chat not found' = chat_id faux ou /start non fait.",
-                  file=sys.stderr)
+        print(f"DIAG: HTTP {r.status_code} — {r.text[:200]}")
     except requests.RequestException as exc:
         print("DIAG: exception reseau:", exc, file=sys.stderr)
 
@@ -112,58 +107,66 @@ def get(url: str):
 def visible_text(html: str) -> str:
     html = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", html)
     text = re.sub(r"(?s)<[^>]+>", " ", html)
-    text = re.sub(r"&nbsp;?|&#8217;|&#8211;", " ", text)
+    text = re.sub(r"&nbsp;?|&#\d+;", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
-def check_pages(state: dict, alerts: list, first_run: bool) -> None:
-    seen = state.setdefault("pages", {})
-    for url in WATCH_PAGES:
-        try:
-            resp = get(url)
-            if resp.status_code != 200:
-                print(f"[page] {url} -> HTTP {resp.status_code}, ignoree")
-                continue
-            text = visible_text(resp.text)
-        except requests.RequestException as exc:
-            print(f"[page] {url}: {exc}", file=sys.stderr)
-            continue
+def fetch_text(url: str):
+    try:
+        r = get(url)
+        if r.status_code != 200:
+            print(f"[page] {url} -> HTTP {r.status_code}, ignoree")
+            return None
+        return visible_text(r.text)
+    except requests.RequestException as exc:
+        print(f"[page] {url}: {exc}", file=sys.stderr)
+        return None
 
+
+def excerpt(text: str, match) -> str:
+    start = max(0, match.start() - 150)
+    return "… " + text[start:match.end() + 250].strip() + " …"
+
+
+def check_page_set(state, alerts, first_run, urls, alert_on_change):
+    seen = state.setdefault("pages", {})
+    for url in urls:
+        text = fetch_text(url)
+        if text is None:
+            continue
         digest = hashlib.sha256(text.encode()).hexdigest()
-        opening = bool(OPENING_RE.search(text))
+        match = OPENING_RE.search(text)
         prev = seen.get(url, {})
-        seen[url] = {"hash": digest, "opening": opening, "len": len(text)}
+        seen[url] = {"hash": digest, "opening": bool(match), "len": len(text)}
 
         if first_run:
-            print(f"[page] baseline {url} (opening={opening})")
+            print(f"[page] baseline {url} (opening={bool(match)}, "
+                  f"{len(text)} car.)")
             continue
 
-        if opening and not prev.get("opening"):
-            snippet = ""
-            m = OPENING_RE.search(text)
-            if m:
-                s = max(0, m.start() - 120)
-                snippet = "\n\n… " + text[s:m.end() + 200] + " …"
-            alerts.append(f"🚨 DATE D'OUVERTURE DETECTEE\n{url}{snippet}")
-        elif prev.get("hash") and prev["hash"] != digest:
-            delta = len(text) - prev.get("len", len(text))
-            alerts.append(f"✏️ Page modifiee ({delta:+d} caracteres)\n{url}")
+        if match and not prev.get("opening"):
+            alerts.append("DATE D'OUVERTURE DETECTEE\n" + url + "\n\n"
+                          + excerpt(text, match))
+        elif alert_on_change and prev.get("hash") and prev["hash"] != digest:
+            alerts.append(f"Reglement modifie ({len(text) - prev.get('len', 0):+d} "
+                          f"caracteres) — verifier le calendrier\n{url}")
+        else:
+            print(f"[page] {url} : inchangee")
 
 
-def check_feeds(state: dict, alerts: list, first_run: bool) -> None:
+def check_feeds(state, alerts, first_run):
     seen_ids = set(state.setdefault("feed_items", []))
     for feed in FEEDS:
         try:
-            resp = get(feed)
-            if resp.status_code != 200:
-                print(f"[feed] {feed} -> HTTP {resp.status_code}, ignore")
+            r = get(feed)
+            if r.status_code != 200:
+                print(f"[feed] {feed} -> HTTP {r.status_code}, ignore")
                 continue
-            xml = resp.text
         except requests.RequestException as exc:
             print(f"[feed] {feed}: {exc}", file=sys.stderr)
             continue
 
-        items = re.findall(r"(?s)<item>(.*?)</item>", xml)
+        items = re.findall(r"(?s)<item>(.*?)</item>", r.text)
         print(f"[feed] {feed}: {len(items)} articles")
         for item in items:
             t = re.search(r"(?s)<title>(.*?)</title>", item)
@@ -174,34 +177,41 @@ def check_feeds(state: dict, alerts: list, first_run: bool) -> None:
             if uid in seen_ids:
                 continue
             seen_ids.add(uid)
-            if not first_run:
-                alerts.append(f"📰 Nouvel article MIUT\n{title}\n{link}")
+            if first_run:
+                continue
+            body = visible_text(item)
+            if FEED_RE.search(title) or FEED_RE.search(body):
+                alerts.append(f"Article inscriptions 2027\n{title}\n{link}")
+            else:
+                print(f"[feed] article hors sujet, ignore : {title}")
     state["feed_items"] = sorted(seen_ids)
 
 
-def heartbeat(state: dict) -> None:
+def heartbeat(state):
     now = dt.datetime.now(dt.timezone.utc)
     last = state.get("heartbeat")
     if last and (now - dt.datetime.fromisoformat(last)).days < 7:
         return
     state["heartbeat"] = now.isoformat()
-    notify("✅ Veille MIUT active. Rien de neuf sur les inscriptions 2027.")
+    notify("Veille MIUT active. Aucune information sur les inscriptions 2027.")
 
 
 def main() -> int:
     state = load_state()
-    first_run = not state
+    first_run = "pages" not in state
     alerts: list = []
 
-    check_pages(state, alerts, first_run)
+    check_page_set(state, alerts, first_run, REGULATION_PAGES, True)
+    check_page_set(state, alerts, first_run, REGISTRATION_PAGES, False)
     check_feeds(state, alerts, first_run)
 
     if first_run:
         state["heartbeat"] = dt.datetime.now(dt.timezone.utc).isoformat()
-        notify("✅ Veille MIUT initialisee. Reference etablie, "
-               "surveillance du reglement et du blog active.")
+        notify("Veille MIUT initialisee (v3, ciblage strict 2027). "
+               "Reference etablie sur le reglement et le blog.")
     elif alerts:
-        notify("MIUT 2027 — mouvement detecte\n\n" + "\n\n".join(alerts))
+        notify("MIUT 2027 — INSCRIPTIONS\n\n" + "\n\n".join(alerts)
+               + "\n\nhttps://miutmadeira.com/regulations/")
     else:
         heartbeat(state)
 
