@@ -1,5 +1,6 @@
 {
   "feed_items": [
+    "1610e54c118c7c0b",
     "1e61492a14513ac8",
     "2d6d7add2b6cbbcb",
     "4066a61640242178",
@@ -7,6 +8,7 @@
     "4d0e04338efcdf72",
     "6821b3d9eca1b724",
     "727c3ffc362ba16e",
+    "8c12151f35109573",
     "8f969ebf7a5a1e0f",
     "9160ef8a368da821",
     "bbb646ffa07c8f31",
@@ -18,33 +20,33 @@
   "heartbeat": "2026-08-10T15:53:53.272554+00:00",
   "pages": {
     "https://miutmadeira.com/fr/inscriptions/": {
-      "hash": "fd0404681746852f7443820f4f249ea2bfb332619368a4dc5c4f3de2eb01e491",
-      "len": 2268,
+      "hash": "2d11b3c9200e87fedfc5062f2d630cf50f49231bb394de490a64fc2c8dc96239",
+      "len": 2270,
       "opening": false
     },
     "https://miutmadeira.com/fr/reglement/": {
-      "hash": "60eeea5147a9a3ef00914a43848ec6fa2e4c3c7e7f69294324e00971fe99940d",
-      "len": 40360,
+      "hash": "924ffb029206f5ed6451951006b0f7bb9818f3a35f40e543e045b520bb89aee7",
+      "len": 40361,
       "opening": false
     },
     "https://miutmadeira.com/inscricoes/": {
-      "hash": "dafb66a5f967bf55108b1bcb78b767e9850943c8a4985106e3d51537d9424134",
+      "hash": "17a7fad3ba6ba9088b7a5f2289cfd27b7931765cfb05ffdc2741a2972d5acb28",
       "len": 2354,
       "opening": false
     },
     "https://miutmadeira.com/pt/inscricoes/": {
-      "hash": "910f3e6fae1a5b98488b2dadc2aed616cce0f0a2a5e0e2feb59dd477f4838e7f",
-      "len": 2352,
+      "hash": "46ea81172e27d3501d56af3d95debb47f61b12f0d928a3ab37e25fca85f36139",
+      "len": 2349,
       "opening": false
     },
     "https://miutmadeira.com/registrations/": {
-      "hash": "f526b625f4e329feac19653a48119175d21929acbd8c202e5a5b8cd33aec868d",
+      "hash": "c6bba8edb62f2a91961fdb492101cbf06693260b008b9cc1a17dd9e9cd0074cf",
       "len": 2239,
       "opening": false
     },
     "https://miutmadeira.com/regulations/": {
-      "hash": "c1791b8518bee3f92b91dbb154b305e3af1b20477379e4c31fcbe466982c0d8f",
-      "len": 65338,
+      "hash": "5e861ea0f6218bec50f5b9fb337716d2f203b59d2cd23c97d7b23a249c7548b4",
+      "len": 65334,
       "opening": false
     }
   }
