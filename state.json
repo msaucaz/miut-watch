@@ -26,33 +26,33 @@
   "heartbeat": "2026-11-09T15:20:27.045154+00:00",
   "pages": {
     "https://miutmadeira.com/fr/inscriptions/": {
-      "hash": "cad0195900492501a1ca63c66242bd2e713bc25a72bfc08fb4fc58ede9bc4d45",
-      "len": 2084,
+      "hash": "1578c2643deba0c0f2fc941ae2230ee9a1cd39fbad14f7e718e1a6838a552d46",
+      "len": 2086,
       "opening": false
     },
     "https://miutmadeira.com/fr/reglement/": {
-      "hash": "b3eb32e5d3b32fef29a197afb80af752d129d7644e53e68bd73bf86c0ffe180a",
-      "len": 40372,
+      "hash": "b674e4894db7a2fb485c06b6646e0c282a1b58b2e373dc79a5cd94e6e83fb901",
+      "len": 40381,
       "opening": false
     },
     "https://miutmadeira.com/inscricoes/": {
-      "hash": "ed9a932ec23c5f14631b07d2944e1164be67e1b902b54dbdd2cea442e1059cde",
-      "len": 2140,
+      "hash": "8b77692adec23d7a98252f80295a43acae70b3064d53f403578d0003ddf4c972",
+      "len": 2135,
       "opening": false
     },
     "https://miutmadeira.com/pt/inscricoes/": {
-      "hash": "596dea5cf0f5596198dab9e1717a6e2047cb90fcaca0f6aa9838357892c092ba",
-      "len": 2138,
+      "hash": "7fc26625a989d4d33a9dbe0d4033d535ecab0ce00637bc4c08790403c0cea92d",
+      "len": 2142,
       "opening": false
     },
     "https://miutmadeira.com/registrations/": {
-      "hash": "ed47913560e8cd8d1198fc1fcf773accad0d86219f7fb5e2c4776b64d22ce901",
-      "len": 2078,
+      "hash": "9a6cc3b0a422ea9f3337e4611b92e26450db3a8095ebb17492753b01ce13abe4",
+      "len": 2076,
       "opening": false
     },
     "https://miutmadeira.com/regulations/": {
-      "hash": "a13c659b1558f5ac9db2ebce9fd279cb371e0365004e8237bd63f307c7afb032",
-      "len": 65365,
+      "hash": "0352890e097598259664c7a85b860cddd78a73d7326df4a3ba5bfb0120573457",
+      "len": 65368,
       "opening": false
     }
   }
